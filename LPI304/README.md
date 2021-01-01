@@ -55,7 +55,7 @@ Also more work to set up than a pure software emulator
 The state of the Xen documentation is pretty dreadful.
 
 ### 330.2 Xen (weight: 9)
-  * [330.2 Notes](330-2-xen.md)
+  * [330.2 Notes](xen.md)
   * [xl command](https://xenbits.xen.org/docs/unstable/man/xl.1.html)
 
 ### 330.3 KVM (weight: 9)

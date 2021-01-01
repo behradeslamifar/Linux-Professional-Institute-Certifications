@@ -91,6 +91,7 @@ The state of the Xen documentation is pretty dreadful.
   * [HAProxy ACLs](https://www.haproxy.com/blog/introduction-to-haproxy-acls/)
 
 ### 334.3 Failover Clusters (weight: 6)
+  * [334.3 Notes](failover-clusters.md)
   * [Pacemaker 1.1 Cluster from Scratch](https://clusterlabs.org/pacemaker/doc/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/)
   * [Pacemaker 2.0 Cluster from Scratch](https://clusterlabs.org/pacemaker/doc/en-US/Pacemaker/2.0/html/Clusters_from_Scratch)
   * [crm cli tool](http://crmsh.github.io/documentation/index.html)

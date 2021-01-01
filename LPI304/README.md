@@ -12,7 +12,50 @@ An **emulation** is a system that behaves exactly like something else, and adher
   
 `Example:` The M.A.M.E. system is built around this very premise. All those old arcade systems that have been long forgotten, that were implemented almost entirely in hardware, or in the firmware of their hardware systems can be emulated right down to the original bugs and crashes that would occur when you reached the highest possible score.  
  
+#### v2v and p2v
+1- v2v redhat: https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html-single/V2V_Guide/index.html
+2- p2v libguestfs: http://libguestfs.org/virt-v2v/
+
+#### History
+VM/370, IBM: to ensure that their new machine would be able to run
+programs developed for an older model
+Xbox 360 software emulation
+
+
+#### Virtualization
+Emulators: VMWare, Microsoft Virtual PC, QEMU, running on simulate processors
+Xen actually runs all software directly on the processor (paravirtualization: para means similar to)
+Xen have abstraction layer for flexibility
+
+#### Virtualization Techniques
+#### Full Virtualization
+Full virtualization or emulation: VMWare and QEMU
+Unaccelerated QEMU is an order of magnitude slower than native execution, and accelerated QEMU or VMware ESX server can only accelerate the emulated machine if it’s the same architecture as the
+underlying hardware.
+
+#### OS Virtualization or Container Virtualization
+s a server-virtualization method where the kernel of an operating system allows for multiple isolated user-space instances, instead of just one. Such instances (sometimes called containers, software containers,[1] virtualization engines (VE), virtual private servers (VPS), or jails)
+chroot, docker, LXC, OpenVZ, Virtuozzo, FreeBSD jails and Solaris Containers (or Zones)
+
+#### Paravirtualization
+somewhere between the two, there’s paravirtualization, which relies on the operating system being modified to work in concert
+Xen
+#### Hypervisor
+#### Type-1, native or bare-metal hypervisors
+These hypervisors run directly on the host's hardware to control the hardware and to manage guest operating systems
+Oracle VM Server for x86, the Citrix XenServer, and VMware ESX/ESXi.
+
+#### Type-2 or hosted hypervisors
+These hypervisors run on a conventional operating system just as other computer programs do
+VMware Workstation, VMware Player, VirtualBox and QEMU
+
+#### Xen limitation
+Only works with operating systems that have been specifically modified to support it
+Also more work to set up than a pure software emulator
+The state of the Xen documentation is pretty dreadful.
+
 ### 330.2 Xen (weight: 9)
+  * [330.2 Notes](330-2-xen.md)
   * [xl command](https://xenbits.xen.org/docs/unstable/man/xl.1.html)
 
 ### 330.3 KVM (weight: 9)

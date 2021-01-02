@@ -177,10 +177,8 @@ After a reboot, nodes will not automatically rejoin the cluster
 Use "pcs cluster status" to verify operations
 
 
-> :bulb: SUSE default install pacemaker based on multicast
+> :bulb: SUSE default install pacemaker based on multicast  
 > :bulb: RHEL 7 install pacemaker with unicast and authenticating
-
-
 
 
 ### Cluster Architecture
@@ -558,72 +556,83 @@ Resource configuratin is stored in the CIB
   * Group
 
 
-Resource Stickiness
+#### Resource Stickiness
 Default resource stickiness defines where a resource should go after the original situation is restored
 
+```
 # locate -bei IPaddr2
 /usr/lib/ocf/resource.d/heartbeat/IPaddr2
 /usr/share/resource-agents/ocft/configs/IPaddr2
 
 crm configure primitive ipaddr ocf:heartbeat:IPaddr2 params ip=192.168.10.20 op monitor interval=10s
 pcs create resource ipaddr IPaddr2 ip=192.168.10.21
+```
 
-
-Understanding Resource Constraints
+#### Understanding Resource Constraints
 3 type of constraints
   location constraints — A location constraint determines which nodes a resource can run on.
   order constraints — An order constraint determines the order in which the resources run.
   colocation constraints — A colocation constraint determines where resources will be placed relative to other resources.
 
 
-Understanding Scores
-  INFINITY (1,000,000): must happen
-  -INFINITY (-1,000,000): may not happen
-Resource migration will enforce a constraint on the resource
-  crm migrate
-  pcs resource move
-  use crm resource unmigrate / pcs resourc clear to remove
-Note that -INFINITY on a location contraint will never run the resource on the node specified, not event its the last node remianing in the cluster
+#### Understanding Scores
+  * INFINITY (1,000,000): must happen
+  * -INFINITY (-1,000,000): may not happen
 
-Using Constraints: crm
+Resource migration will enforce a constraint on the resource
+  * crm migrate
+  * pcs resource move
+  * use crm resource unmigrate / pcs resourc clear to remove
+
+> :bulb: Note that -INFINITY on a location contraint will never run the resource on the node specified, not event its the last node remianing in the cluster
+
+#### Using Constraints: crm
+```
 loaction db-on-node2 mariadb 1000: node2
 order ip-before-web Mandatory: ip web
 order ip-befor-DRBD-promote inf: ip:start drbd:promote
 colocate web1-not-with-web2 -inf: web1 web2
+```
 
-Using Constraints: pcs
+#### Using Constraints: pcs
+```
 pcs constraint location web prefers node1
 pcs constraint location web prefers node1=1000; pcs constraint location web prefers node2=500
 pcs constraint location web avoids node1
 pcs constraint colocation add web1 with db1
 pcs constraint colocation add web1 with db1 -INFINITY
 pcs constraint order webip then webserver
+```
+
 Notice that all pcs command add names to the constraints automatically
 
 Simulate Cluster Status
+```
 crm_simulate -sL : Show current score
+```
 
-
-Understanding Groups
+#### Understanding Groups
 Groups benefits
-  Combines resource primitives in a single entity that can be managed as such
-  Provides specific ordering 
-  Provides specific dependencies
-  If using constraints, they should point at the entire group and not its members
-  Stickness score is the sum of all members stickness scores
+  * Combines resource primitives in a single entity that can be managed as such
+  * Provides specific ordering 
+  * Provides specific dependencies
+  * If using constraints, they should point at the entire group and not its members
+  * Stickness score is the sum of all members stickness scores
 
 Create Groups: pcs
+```
 pcs resource create ipaddr IPaddr2 ip=192.168.10.20 --group newgroup
 pcs resource create fs1 Filesystem device=/dev/sda1 directory=/mnt/fs1 --group newgroup 
 
 pcs resource group add newgroup ipaddr fs1
+```
 
 Create Groups: crm 
+```
 crm configure group newgroup ipaddr fs1
+```
 
-
-
-Understanign Clones
+#### Understanign Clones
 Use to run a primitive or group on multiple nodes
 Anonymous clones run exactly the same primitive
   Useful for services such as DLM
@@ -635,7 +644,7 @@ Multi state resources are a special case of a clone, used for active/passive con
   Using an additional Promote and Demote operation
 
 
-Manging Failed Resources
+#### Manging Failed Resources
 First read logs to find out why the resource has failed
   /var/log/messages, /var/log/syslog
   journalctl
@@ -652,12 +661,12 @@ pcs resource cleanup myresource
 crm resource cleanup myresource
 
 
-Lab1: Resource group with pcs
-Configure two resource group, one for Apache and one for vsftpd
-In the groups, have the services started and give the both of them a unique ip address
-The resource group should be started before the Apache resource group
+#### Lab1: Resource group with pcs
+Configure two resource group, one for Apache and one for vsftpd  
+In the groups, have the services started and give the both of them a unique ip address  
+The resource group should be started before the Apache resource group  
 
-answer:
+```
 pcs resource group add apache-group apache-ip
 pcs resource group add apache-group apache-service
 
@@ -666,20 +675,21 @@ pcs resource create vsftpd-service systemd:vsftpd  --group ftp-group
 
 pcs constraint colocation add apache-group with ftp-group -10000
 pcs constraint order apache-group then ftp-group
+```
 
 
-
-========== Note
+Note
+```
 rsc_defaults rsc-options: \
   resource-stickiness=1 \
   migration-threshold=3
 op_defaults op-options: \
   tiemout=600 \
   record-pending=true
+```
 
-============
-
-crm configure edit
+```
+# crm configure edit
 
 group apache-group apache-ip apache-service
 primitive ftp-ip ocf:heartbeat:IPaddr2 params cidr_netmask=24 ip=192.168.20.102
@@ -687,34 +697,43 @@ primitive ftp-service systemd:vsftpd
 group ftp-group ftp-ip ftp-service
 colocation  web-not-ftp -10000: ftp-group apache-group
 order ftp-after-apache apache-group ftp-group
+```
 
-
-
-Managing Resource States - Part 1
+#### Managing Resource States - Part 1
 After creating, resources will automatically started (enabled)
-  Use "pcs resource enable|disable" to manage the state
-  No equivalent in crm  
-Administrator can restart resources
-  pcs resource restart
-  crm resource restart 
-Resource properties can be changed 
-  pcs resource update, pcs resource op add|remove
-  crm configure edit
+  * Use "pcs resource enable|disable" to manage the state
+  * No equivalent in crm  
 
-Starting Resources
+Administrator can restart resources
+```
+pcs resource restart
+crm resource restart 
+```
+
+Resource properties can be changed 
+```
+pcs resource update, pcs resource op add|remove
+crm configure edit
+```
+
+#### Starting Resources
 In pcs, there is no start command, resources are started by pacemaker automatically, unless something preventing that
 If a pcs resource isn't starting, use "pcs resource debute-start <resource_name>" to find out why, and use "pcs resource failcount reset" to reset the resource.
 
-Managing Resource State - Part 2
+#### Managing Resource State - Part 2
 Resources can be set in (un)managed mode as well, so that the cluster temperarily takes it hands off and act as if its running locally
-  pcs resource [un]manage
-  crm resource [un]manage
+```
+pcs resource [un]manage
+crm resource [un]manage
+```
+
 In pcs, you can use "pcs resource relocate" to relocate resources to the node that accourding to their location constraints is the preferred node
 
-Using Resource Utilization 
+#### Using Resource Utilization 
 Resource utilization can be used to calculate if a node has sufficient resources
 Utilization parameters need to be set on a node as well as the resource
 Utilization uses an arbitary value that matches node and resource utilization and is applied to ram and cpu
+```
   pcs resource utilization myresource ram=5 cpu=10
   crm resource utilization myresource ram=10 cpu=20
 
@@ -722,68 +741,83 @@ Utilization uses an arbitary value that matches node and resource utilization an
   crm configure edit
     node 1: node1 \
         utilization cpu=4 ram=8
+```
 
-
-Managing Cluster Membership
+#### Managing Cluster Membership
 There are many different ways to control membership of cluster nodes, approach is very different between pcs and crm
+
 Starting and stoping cluster services
-  pcs cluster start; pcs cluster stop node2.example.com; pcs cluster stop --all
+```
+pcs cluster start; pcs cluster stop node2.example.com; pcs cluster stop --all
+```
+
 Enabling/disabling cluster service for automatic joining
-  pcs cluster disable node1.example.com
+```
+pcs cluster disable node1.example.com
+```
+
 Adding and removing nodes
-  pcs cluster node {add|remove} node4.example.com
+```
+pcs cluster node {add|remove} node4.example.com
+```
 
+#### Adding Nodes (pcs)
+Conditions to be met to add or remove a node  
+  * firewall is opened
+  * pcs and fence-agents-all packages are installed
+  * pcsd started and enabled 
+  * hacluster user has a password
+  * from and existing node, "pcs cluster auth node4.example.com" has been used to add the new node to the cluster.
 
-Adding Nodes (pcs)
-Conditions to be met to add or remove a node
-  firewall is opened
-  pcs and fence-agents-all packages are installed
-  pcsd started and enabled 
-  hacluster user has a password
-  from and existing node, "pcs cluster auth node4.example.com" has been used to add the new node to the cluster.
 After adding the node, the "pcs cluster auth" command needs to be used from the new node to authorized existing node
 
-Removing Nodes (pcs)
+#### Removing Nodes (pcs)
 First use, "pcs cluster node remove node4.example.com"
 Next changing fencing configuration, using "pcs stonith delete node4.example.com"
 Manage node status with "pcs node <status>"
 
-Managing Standby State
-pcs node standby node4.example.com
+#### Managing Standby State
 no resource running on node4 anyway
+```
+pcs node standby node4.example.com
+```
+
+```
 pcs node unstandby node4
+```
 
-
-Adding/Removing Nodes (crm)
+#### Adding/Removing Nodes (crm)
 crm cluster add to add nodes
 Alternatively, work through corosync instead 
   To add a node, install corosync on that node, when using multicast it will automatically rejoin
   To remove a node, use corosync-cfgtool -H  to halt it on the local node and next "systemctl stop corosync"
   "corosync-cfgtool -k" kill a node based on its node-id
 
+```
 pcs status nodes
 pcs status corosync
 pcs status pcsd
 pcs status resources
 pcs status cluster
+```
 
+#### Managing Maintenance and Standby
+A node in maintenance mode will still run resources, a node in standby mode will no longer run resources. For update cluster stack you can use maintenance mode to prevent to cluster be affected.  
+```
+pcs node [un]maintenance [--all|<node>]
+crm node maintenance <node> / crm node ready <node>
+pcs node [un]standby [--all|<node>]
+crm node standby <node> / crm configure edit (remove standby)
+```
 
-Managing Maintenance and Standby
-A node in maintenance mode will still run resources, a node in standby mode will no longer run resources
-  For update cluster stack you can use maintenance mode to prevent to cluster be affected.
-  pcs node [un]maintenance [--all|<node>]
-  crm node maintenance <node> / crm node ready <node>
-  pcs node [un]standby [--all|<node>]
-  crm node standby <node> / crm configure edit (remove standby)
-
-Maintenance Level
+#### Maintenance Level
 Maintenance mode applies to different levels
   node: crm node maintenance node4 / crm node ready node4
   resource: crm meta <resource> set maintenance true / pcs resource update meta maintenance=true
   cluster: crm configure property maintenance-mode=true / pcs property set maintenance-mode=true
 
 
-Moving Resources
+#### Moving Resources
 Resources can be migrated (moved) away from this node, which will create a -INIFINITY location constraint
   pcs resource move <force|resource_name>
   crm resource move <force|resource_name>
@@ -793,7 +827,7 @@ To get resource back to their original location, they need to be "unmoved"
   pcs resource clear <resource>
   crm resource clear <resource>
 
-Managing Failed Resources
+#### Managing Failed Resources
 A resource that fails to start, will set its failcount to INIFINITY
   The result is that the resource won't be able to start anymore until the failure timeout exipres
   Use "pcs resource failcount show" to monitor
@@ -801,7 +835,7 @@ A resource that fails to start, will set its failcount to INIFINITY
   Use "pcs resource failtcount reset <resource_name> <node>" to reset the failcount and try again
   In crm, use "crm resource cleanup"
 
-Corosync Logging
+#### Corosync Logging
 Corosync logs to syslog by default
 Use the logging seciton in /etc/corosync/corosync.conf to control logging 
 or have corosync send message to stderr so that systemd will process them through journald
@@ -813,14 +847,14 @@ After making change on one node, use "pcs cluster sync" to synchronize the chang
 On each node, use "pcs cluster reload corosync" to activate the changes
 Consider using logrotate
 
-Pacemaker Logging
+#### Pacemaker Logging
 Packemaker follows corosync logs 
 Use PCMK_log* options in /etc/sysconfig/pacemaker or /etc/default/pacemaker to provide alternative logging
   like PCMK_debug=yes
 Monitor logs through journald using "journalctl -l -u pacemaker.service -u corosync.service
 
 
-Using MailTo
+#### Using MailTo
 Use the MailTo resource with the email= argument to ensure the administrator gets an email after the cluster migrates a resource
   Its a resource, not an option
 pcs resource create web-mailto MailTo email=b.eslamifar@gmail.com subject="web group migrate" --group web
@@ -829,7 +863,7 @@ pcs resource create web-mailto MailTo email=b.eslamifar@gmail.com subject="web g
 crm configure primitive web-mailto MailTo email=b.eslamifar@gmail.com subject="web group migrate"
   Dont forget to put it in a group also
 
-Cluster Monitoring
+#### Cluster Monitoring
 Use crm_mon from the command line
 The ClusterMon resource agent automates monitoring, using a few options
   user

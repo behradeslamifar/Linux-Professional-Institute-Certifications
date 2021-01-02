@@ -812,56 +812,73 @@ crm node standby <node> / crm configure edit (remove standby)
 
 #### Maintenance Level
 Maintenance mode applies to different levels
-  node: crm node maintenance node4 / crm node ready node4
-  resource: crm meta <resource> set maintenance true / pcs resource update meta maintenance=true
-  cluster: crm configure property maintenance-mode=true / pcs property set maintenance-mode=true
+  * node: crm node maintenance node4 / crm node ready node4
+  * resource: crm meta <resource> set maintenance true / pcs resource update meta maintenance=true
+  * cluster: crm configure property maintenance-mode=true / pcs property set maintenance-mode=true
 
 
 #### Moving Resources
-Resources can be migrated (moved) away from this node, which will create a -INIFINITY location constraint
-  pcs resource move <force|resource_name>
-  crm resource move <force|resource_name>
-  pcs resource ban 
-    for both, consider using lifetime=nn to specify how long
+Resources can be migrated (moved) away from this node, which will create a -INIFINITY location constraint  
+```
+pcs resource move <force|resource_name>
+crm resource move <force|resource_name>
+pcs resource ban 
+```
+
+for both, consider using lifetime=nn to specify how long  
 To get resource back to their original location, they need to be "unmoved"
-  pcs resource clear <resource>
-  crm resource clear <resource>
+```
+pcs resource clear <resource>
+crm resource clear <resource>
+```
 
 #### Managing Failed Resources
 A resource that fails to start, will set its failcount to INIFINITY
-  The result is that the resource won't be able to start anymore until the failure timeout exipres
-  Use "pcs resource failcount show" to monitor
-  Use "pcs resource debut-start <resource_name>" to more information
-  Use "pcs resource failtcount reset <resource_name> <node>" to reset the failcount and try again
-  In crm, use "crm resource cleanup"
+  * The result is that the resource won't be able to start anymore until the failure timeout exipres
+  * Use "pcs resource failcount show" to monitor
+  * Use "pcs resource debut-start <resource_name>" to more information
+  * Use "pcs resource failtcount reset <resource_name> <node>" to reset the failcount and try again
+  * In crm, use "crm resource cleanup"
 
 #### Corosync Logging
-Corosync logs to syslog by default
-Use the logging seciton in /etc/corosync/corosync.conf to control logging 
-or have corosync send message to stderr so that systemd will process them through journald
+Corosync logs to syslog by default  
+Use the logging seciton in /etc/corosync/corosync.conf to control logging  
+or have corosync send message to stderr so that systemd will process them through journald  
+```
   logging {
      to_stderr:yes
   }
-Use logfile_priority and syslog_priority inside a logging block to set alert, crit, debug, emerg, err, info, notice or warning
-After making change on one node, use "pcs cluster sync" to synchronize the changes. 
-On each node, use "pcs cluster reload corosync" to activate the changes
-Consider using logrotate
+```
+
+  * Use logfile_priority and syslog_priority inside a logging block to set alert, crit, debug, emerg, err, info, notice or warning
+  * After making change on one node, use "pcs cluster sync" to synchronize the changes. 
+  * On each node, use "pcs cluster reload corosync" to activate the changes
+  * Consider using logrotate
 
 #### Pacemaker Logging
-Packemaker follows corosync logs 
-Use PCMK_log* options in /etc/sysconfig/pacemaker or /etc/default/pacemaker to provide alternative logging
-  like PCMK_debug=yes
+Packemaker follows corosync logs  
+Use PCMK_log* options in /etc/sysconfig/pacemaker or /etc/default/pacemaker to provide alternative logging  
+```
+like PCMK_debug=yes
+```
+
 Monitor logs through journald using "journalctl -l -u pacemaker.service -u corosync.service
 
 
 #### Using MailTo
 Use the MailTo resource with the email= argument to ensure the administrator gets an email after the cluster migrates a resource
-  Its a resource, not an option
+  * Its a resource, not an option
+
+```
 pcs resource create web-mailto MailTo email=b.eslamifar@gmail.com subject="web group migrate" --group web
-  This needs mailx package to be installed
-  It also needs Postfix to be able to send message
+```
+  * This needs mailx package to be installed
+  * It also needs Postfix to be able to send message
+
+```
 crm configure primitive web-mailto MailTo email=b.eslamifar@gmail.com subject="web group migrate"
-  Dont forget to put it in a group also
+```
+  * Dont forget to put it in a group also
 
 #### Cluster Monitoring
 Use crm_mon from the command line
